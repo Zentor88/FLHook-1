@@ -1630,10 +1630,17 @@ namespace PlayerCommands
 				PrintUserCmdText(client, L"ERR Not enough or invalid credits");
 				return;
 			}
-
-			pub::Player::AdjustCash(client, 0 - money);
-			base->money += money;
-			base->Save();
+			else if (iCurrMoney > 1900000000) //stop potential credit duplication
+			{
+				PrintUserCmdText(client, L"ERR Must have less than 1.9 billion credits on hand - unsafe deposit terminated");
+				return;
+			}
+			else
+			{
+				pub::Player::AdjustCash(client, 0 - money);
+				base->money += money;
+				base->Save();
+			}			
 
 			AddLog("NOTICE: Bank deposit money=%d new_balance=%I64d base=%s charname=%s (%s)",
 				money, base->money,
