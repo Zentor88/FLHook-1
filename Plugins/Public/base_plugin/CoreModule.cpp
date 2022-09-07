@@ -480,7 +480,23 @@ bool CoreModule::Timer(uint time)
 			{
 				// Reduce hitpoints to reflect wear and tear. This will eventually
 				// destroy the base unless it is able to repair itself.
-				base->base_health -= set_damage_per_tick + (set_damage_per_tick * base->base_level);
+				uint number_of_crew = base->HasMarketItem(set_base_crew_type);
+
+				if (number_of_crew < (base->base_level * 200))
+				{
+					float healthpercent = (base->base_health / base->max_base_health);
+					
+					if (healthpercent < 0.20)
+						base->base_health -= ((set_damage_per_tick * base->base_level) * 20);
+					else if (healthpercent < 0.40)
+						base->base_health -= ((set_damage_per_tick * base->base_level) * 15);
+					else if (healthpercent < 0.60)
+						base->base_health -= ((set_damage_per_tick * base->base_level) * 10);
+					else if (healthpercent < 0.80)
+						base->base_health -= ((set_damage_per_tick * base->base_level) * 5);
+				}
+				else
+					base->base_health -= (set_damage_per_tick * base->base_level);
 			}
 
 			// Repair damage if we have sufficient crew on the base.
