@@ -408,6 +408,9 @@ public:
 
 	int logic;
 	int invulnerable;
+	float total_damage = 0.0f;
+	float accumulated_damage = 0.0f;
+	time_t accumulated_damage_timer;
 
 	//last player attacker
 	wstring last_attacker;
@@ -604,9 +607,6 @@ extern uint set_damage_tick_time;
 /// The seconds per tick
 extern uint set_tick_time;
 
-/// If the shield is up then damage to the base is changed by this multiplier.
-extern float set_shield_damage_multiplier;
-
 /// Holiday mode
 extern bool set_holiday_mode;
 
@@ -620,6 +620,9 @@ extern const char* MODULE_TYPE_NICKNAMES[13];
 extern float damage_threshold;
 
 extern float siege_mode_damage_trigger_level;
+
+extern uint BASE_ACCUMULATED_DAMAGE_TIMEOUT;
+extern float MAXIMUM_ACCUMULATED_DAMAGE;
 
 extern float siege_mode_chain_reaction_trigger_distance;
 #endif

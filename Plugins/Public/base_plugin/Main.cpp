@@ -86,6 +86,12 @@ uint repair_per_repair_cycle = 60000;
 /// If the shield is up then damage to the base is changed by this multiplier.
 float set_shield_damage_multiplier = 0.03f;
 
+// Maximum amount of damage base will absorb before becoming invulnerable for a time window
+float MAXIMUM_ACCUMULATED_DAMAGE;
+
+// Length of time (in minutes) between siege assaults during which the base remain invulnerable
+uint BASE_ACCUMULATED_DAMAGE_TIMEOUT;
+
 // If true, use the new solar based defense platform spawn 	 	
 bool set_new_spawn = true;
 
@@ -448,9 +454,13 @@ void LoadSettingsActual()
 					{
 						repair_per_repair_cycle = ini.get_value_int(0);
 					}
-					else if (ini.is_value("shield_damage_multiplier"))
+					else if (ini.is_value("siege_timeout"))
 					{
-						set_shield_damage_multiplier = ini.get_value_float(0);
+						BASE_ACCUMULATED_DAMAGE_TIMEOUT = ini.get_value_int(0);
+					}
+					else if (ini.is_value("max_damage_per_session"))
+					{
+						MAXIMUM_ACCUMULATED_DAMAGE = ini.get_value_float(0);
 					}
 					else if (ini.is_value("construction_shiparch"))
 					{

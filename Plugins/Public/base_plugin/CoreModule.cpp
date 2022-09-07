@@ -588,11 +588,39 @@ float CoreModule::SpaceObjDamaged(uint space_obj, uint attacking_space_obj, floa
 		// Reduce the damage to 10% if the shield is or will be online.
 		if (base->shield_state != PlayerBase::SHIELD_STATE_OFFLINE)
 		{
-			return curr_hitpoints - ((curr_hitpoints - new_hitpoints) * set_shield_damage_multiplier);
+			float raw_damage = curr_hitpoints - new_hitpoints;
+			base->accumulated_damage += raw_damage;
+			
+			float new_damage_modifier = 1.0f - (base->accumulated_damage / MAXIMUM_ACCUMULATED_DAMAGE);
+			if (new_damage_modifier < 0.05f)
+				new_damage_modifier = 0.05f;
+			float new_damage = raw_damage * new_damage_modifier;
+			base->total_damage += new_damage;
+			float hitpoints = curr_hitpoints - new_damage;
+			ConPrint(L"Total: %f -- Modifier: %f\n", base->total_damage, new_damage_modifier);
+
+			if (base->total_damage > MAXIMUM_ACCUMULATED_DAMAGE)
+			{
+				uint client = HkGetClientIDByShip(attacking_space_obj);
+				PrintUserCmdText(client, L"Shield is fully charged, this base has become invulnerable!\n");
+
+				// Start Timer
+				base->accumulated_damage_timer = time(nullptr);
+				base->invulnerable = 1;
+			}
+			return hitpoints;
 		}
 	}
 	else
 	{
+		if ((base->accumulated_damage_timer + (BASE_ACCUMULATED_DAMAGE_TIMEOUT * 60)) < time(nullptr))
+		{
+			base->accumulated_damage_timer = 0;
+			base->total_damage = 0;
+			base->accumulated_damage = 0;
+			base->invulnerable = 0;
+			ConPrint(L"Base %s is no longer invulnerable\n", base->basename);
+		}
 		return curr_hitpoints;
 	}
 
