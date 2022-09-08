@@ -446,7 +446,7 @@ void CoreModule::RepairDamage(float max_base_health)
 				if (base->HasMarketItem(item->good) >= item->quantity)
 				{
 					base->RemoveMarketGood(item->good, item->quantity);
-					base->base_health += repair_per_repair_cycle;
+					base->base_health += (repair_per_repair_cycle * (base->base_level * 0.5));
 					base->repairing = true;
 				}
 			}
@@ -475,13 +475,14 @@ bool CoreModule::Timer(uint time)
 		{
 
 			pub::SpaceObj::GetHealth(space_obj, base->base_health, base->max_base_health);
+			uint number_of_crew = base->HasMarketItem(set_base_crew_type);
 
 			if (!dont_rust && ((time%set_damage_tick_time) == 0))
 			{
 				// Reduce hitpoints to reflect wear and tear. This will eventually
 				// destroy the base unless it is able to repair itself.
-				uint number_of_crew = base->HasMarketItem(set_base_crew_type);
-
+				
+				// If base is abandoned, it dies faster
 				if (number_of_crew < (base->base_level * 200))
 				{
 					float healthpercent = (base->base_health / base->max_base_health);
@@ -501,7 +502,6 @@ bool CoreModule::Timer(uint time)
 
 			// Repair damage if we have sufficient crew on the base.
 			base->repairing = false;
-			uint number_of_crew = base->HasMarketItem(set_base_crew_type);
 			if (number_of_crew >= (base->base_level * 200)) {
 				RepairDamage(base->max_base_health);
 				if (dont_eat) {
@@ -589,6 +589,7 @@ bool CoreModule::Timer(uint time)
 float CoreModule::SpaceObjDamaged(uint space_obj, uint attacking_space_obj, float curr_hitpoints, float new_hitpoints)
 {
 	base->SpaceObjDamaged(space_obj, attacking_space_obj, curr_hitpoints, new_hitpoints);
+	float max_damage_cap = ((MAX_DAMAGE_PERCENT * 0.01) * base->max_base_health);
 
 	if (set_holiday_mode || (base->basetype == "jumpgate") || (base->basetype == "jumphole") || (base->basetype == "airlock") || (base->basetype == "planet"))
 	{
@@ -598,7 +599,7 @@ float CoreModule::SpaceObjDamaged(uint space_obj, uint attacking_space_obj, floa
 		pub::SpaceObj::SetRelativeHealth(space_obj, rhealth);
 		return curr_hitpoints;
 	}
-
+	
 	if (base->invulnerable == 0)
 	{
 		// Reduce the damage to 10% if the shield is or will be online.
@@ -607,7 +608,7 @@ float CoreModule::SpaceObjDamaged(uint space_obj, uint attacking_space_obj, floa
 			float raw_damage = curr_hitpoints - new_hitpoints;
 			base->accumulated_damage += raw_damage;
 			
-			float new_damage_modifier = 1.0f - (base->accumulated_damage / MAXIMUM_ACCUMULATED_DAMAGE);
+			float new_damage_modifier = 1.0f - (base->accumulated_damage / max_damage_cap);
 			if (new_damage_modifier < 0.05f)
 				new_damage_modifier = 0.05f;
 			float new_damage = raw_damage * new_damage_modifier;
@@ -615,7 +616,7 @@ float CoreModule::SpaceObjDamaged(uint space_obj, uint attacking_space_obj, floa
 			float hitpoints = curr_hitpoints - new_damage;
 			ConPrint(L"Total: %f -- Modifier: %f\n", base->total_damage, new_damage_modifier);
 
-			if (base->total_damage > MAXIMUM_ACCUMULATED_DAMAGE)
+			if (base->total_damage > max_damage_cap)
 			{
 				uint client = HkGetClientIDByShip(attacking_space_obj);
 				PrintUserCmdText(client, L"Shield is fully charged, this base has become invulnerable!\n");

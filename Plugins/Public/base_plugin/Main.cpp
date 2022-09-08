@@ -86,8 +86,8 @@ uint repair_per_repair_cycle = 60000;
 /// If the shield is up then damage to the base is changed by this multiplier.
 float set_shield_damage_multiplier = 0.03f;
 
-// Maximum amount of damage base will absorb before becoming invulnerable for a time window
-float MAXIMUM_ACCUMULATED_DAMAGE;
+// Maximum amount of damage (in percent of base's max health) base will absorb before becoming invulnerable for a time window
+float MAX_DAMAGE_PERCENT;
 
 // Length of time (in minutes) between siege assaults during which the base remain invulnerable
 uint BASE_ACCUMULATED_DAMAGE_TIMEOUT;
@@ -460,7 +460,7 @@ void LoadSettingsActual()
 					}
 					else if (ini.is_value("max_damage_per_session"))
 					{
-						MAXIMUM_ACCUMULATED_DAMAGE = ini.get_value_float(0);
+						MAX_DAMAGE_PERCENT = ini.get_value_float(0);
 					}
 					else if (ini.is_value("construction_shiparch"))
 					{

@@ -622,7 +622,7 @@ extern float damage_threshold;
 extern float siege_mode_damage_trigger_level;
 
 extern uint BASE_ACCUMULATED_DAMAGE_TIMEOUT;
-extern float MAXIMUM_ACCUMULATED_DAMAGE;
+extern float MAX_DAMAGE_PERCENT;
 
 extern float siege_mode_chain_reaction_trigger_distance;
 #endif
