@@ -589,7 +589,9 @@ bool CoreModule::Timer(uint time)
 float CoreModule::SpaceObjDamaged(uint space_obj, uint attacking_space_obj, float curr_hitpoints, float new_hitpoints)
 {
 	base->SpaceObjDamaged(space_obj, attacking_space_obj, curr_hitpoints, new_hitpoints);
-	float max_damage_cap = ((MAX_DAMAGE_PERCENT * 0.01) * base->max_base_health);
+	float max_damage_cap = ((MAX_DAMAGE_PERCENT * 0.01f) * base->max_base_health);
+	float siege_break_point = (max_damage_cap / 2.0f);
+	uint break_the_siege_time = (base->base_level * 1320);
 
 	if (set_holiday_mode || (base->basetype == "jumpgate") || (base->basetype == "jumphole") || (base->basetype == "airlock") || (base->basetype == "planet"))
 	{
@@ -614,12 +616,23 @@ float CoreModule::SpaceObjDamaged(uint space_obj, uint attacking_space_obj, floa
 			float new_damage = raw_damage * new_damage_modifier;
 			base->total_damage += new_damage;
 			float hitpoints = curr_hitpoints - new_damage;
-			ConPrint(L"Total: %f -- Modifier: %f\n", base->total_damage, new_damage_modifier);
-
-			if (base->total_damage > max_damage_cap)
+						
+			if(((base->total_damage - new_damage) <= siege_break_point) && (base->total_damage >= siege_break_point))
 			{
-				uint client = HkGetClientIDByShip(attacking_space_obj);
-				PrintUserCmdText(client, L"Shield is fully charged, this base has become invulnerable!\n");
+				SiegeMessages(base->basename, base->system, L" has sustained critical damage! Rally the defenses!");
+				base->break_the_siege_start_time = time(nullptr);
+			}
+			if ((base->break_the_siege_start_time + break_the_siege_time) < time(nullptr))
+			{
+				SiegeMessages(base->basename, base->system, L": Assault has been thwarted! Shield at max and now invulnerable to attack");
+
+				// Start Timer
+				base->accumulated_damage_timer = time(nullptr);
+				base->invulnerable = 1;
+			}
+			else if(base->total_damage > max_damage_cap)
+			{
+				SiegeMessages(base->basename, base->system, L": Shield has reached max charge! Base is now invulnerable to attack");
 
 				// Start Timer
 				base->accumulated_damage_timer = time(nullptr);
@@ -644,6 +657,20 @@ float CoreModule::SpaceObjDamaged(uint space_obj, uint attacking_space_obj, floa
 	return 0.0f;
 }
 
+
+void CoreModule::SiegeMessages(wstring basename, uint system, wstring message)
+{
+	wstring wscMsg = L"%b %s";
+	wscMsg = ReplaceStr(wscMsg, L"%b", basename);
+	wscMsg = ReplaceStr(wscMsg, L"%s", message);
+
+	const Universe::ISystem* iSys = Universe::get_system(system);
+	wstring sysname = stows(iSys->nickname);
+
+	HkMsgS(sysname.c_str(), wscMsg.c_str());
+
+	return;
+}
 
 bool CoreModule::SpaceObjDestroyed(uint space_obj)
 {

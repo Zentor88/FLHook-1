@@ -138,6 +138,7 @@ public:
 	float SpaceObjDamaged(uint space_obj, uint attacking_space_obj, float curr_hitpoints, float new_hitpoints);
 	bool SpaceObjDestroyed(uint space_obj);
 	void SetReputation(int player_rep, float attitude);
+	void SiegeMessages(wstring basename, uint system, wstring message);
 
 	void RepairDamage(float max_base_health);
 };
@@ -411,6 +412,7 @@ public:
 	float total_damage = 0.0f;
 	float accumulated_damage = 0.0f;
 	time_t accumulated_damage_timer;
+	time_t break_the_siege_start_time;
 
 	//last player attacker
 	wstring last_attacker;
