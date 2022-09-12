@@ -1320,12 +1320,12 @@ int __cdecl Dock_Call(unsigned int const &iShip, unsigned int const &base, int i
 			}
 
 			// Shield is up, docking is not possible.
-			if (pbase->shield_active_time)
+			if (pbase->shield_active_time && (pbase->invulnerable == 0))
 			{
-				PrintUserCmdText(client, L"Docking failed because base shield is active");
-				pub::Player::SendNNMessage(client, pub::GetNicknameId("info_access_denied"));
-				returncode = SKIPPLUGINS_NOFUNCTIONCALL;
-				return 0;
+					PrintUserCmdText(client, L"Docking denied during siege attacks");
+					pub::Player::SendNNMessage(client, pub::GetNicknameId("info_access_denied"));
+					returncode = SKIPPLUGINS_NOFUNCTIONCALL;
+					return 0;
 			}
 
 			if (!IsDockingAllowed(pbase, client))
@@ -1477,12 +1477,12 @@ void __stdcall RequestEvent(int iIsFormationRequest, unsigned int iShip, unsigne
 			if (base)
 			{
 				// Shield is up, docking is not possible.
-				if (base->shield_active_time)
+				if (base->shield_active_time && (base->invulnerable == 0))
 				{
-					PrintUserCmdText(client, L"Docking failed because base shield is active");
-					pub::Player::SendNNMessage(client, pub::GetNicknameId("info_access_denied"));
-					returncode = SKIPPLUGINS_NOFUNCTIONCALL;
-					return;
+						PrintUserCmdText(client, L"Docking denied durin siege attacks");
+						pub::Player::SendNNMessage(client, pub::GetNicknameId("info_access_denied"));
+						returncode = SKIPPLUGINS_NOFUNCTIONCALL;
+						return;
 				}
 
 				if (!IsDockingAllowed(base, client))

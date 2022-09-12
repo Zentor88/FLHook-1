@@ -604,7 +604,6 @@ float CoreModule::SpaceObjDamaged(uint space_obj, uint attacking_space_obj, floa
 	
 	if (base->invulnerable == 0)
 	{
-		// Reduce the damage to 10% if the shield is or will be online.
 		if (base->shield_state != PlayerBase::SHIELD_STATE_OFFLINE)
 		{
 			float raw_damage = curr_hitpoints - new_hitpoints;
