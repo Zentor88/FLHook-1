@@ -163,6 +163,7 @@ void PlayerBase::Load()
 				destposition.y = 0;
 				destposition.z = 0;
 				invulnerable = 0;
+				accumulated_damage_timer = 0;
 				logic = 1;
 				string defaultsystem = "iw09";
 				destsystem = CreateID(defaultsystem.c_str());
@@ -222,6 +223,10 @@ void PlayerBase::Load()
 					else if (ini.is_value("invulnerable"))
 					{
 						invulnerable = ini.get_value_int(0);
+					}
+					else if (ini.is_value("invuln_time"))
+					{
+						accumulated_damage_timer = ini.get_value_int(0);
 					}
 					else if (ini.is_value("destposition"))
 					{
@@ -376,6 +381,7 @@ void PlayerBase::Save()
 		fprintf(file, "affiliation = %u\n", affiliation);
 		fprintf(file, "logic = %u\n", logic);
 		fprintf(file, "invulnerable = %u\n", invulnerable);
+		fprintf(file, "invuln_time = %u\n", accumulated_damage_timer);
 
 		fprintf(file, "money = %I64d\n", money);
 		fprintf(file, "system = %u\n", system);
@@ -706,7 +712,7 @@ float PlayerBase::SpaceObjDamaged(uint space_obj, uint attacking_space_obj, floa
 
 	// Make sure that the attacking player is hostile.
 	uint client = HkGetClientIDByShip(attacking_space_obj);
-	if (client)
+	if (this->invulnerable == 0 && client)
 	{
 		const wstring &charname = (const wchar_t*)Players.GetActiveCharacterName(client);
 		last_attacker = charname;

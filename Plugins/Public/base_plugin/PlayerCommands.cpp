@@ -1930,7 +1930,7 @@ namespace PlayerCommands
 
 		for (map<string, ARCHTYPE_STRUCT>::iterator iter = mapArchs.begin(); iter != mapArchs.end(); iter++)
 		{
-
+			
 			ARCHTYPE_STRUCT &thearch = iter->second;
 			if (iter->first == newbase->basetype)
 			{

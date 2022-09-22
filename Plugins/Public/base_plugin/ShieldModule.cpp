@@ -73,7 +73,7 @@ bool ShieldModule::Timer(uint time)
 	if (HasShieldPower())
 	{
 		// If there's a pending request for the shield then activate it
-		if (base->shield_active_time)
+		if (base->accumulated_damage)
 		{
 			base->shield_state = PlayerBase::SHIELD_STATE_ACTIVE;
 		}
@@ -84,8 +84,8 @@ bool ShieldModule::Timer(uint time)
 		}
 	}
 
-	// If the shield is active then use fuel every 10 seconds
-	if (base->shield_state == PlayerBase::SHIELD_STATE_ACTIVE && (time%set_tick_time) == 0)
+	// If the shield is active then use fuel every tick
+	if (base->invulnerable == 0 && base->shield_state == PlayerBase::SHIELD_STATE_ACTIVE && (time%set_tick_time) == 0)
 	{
 		for (map<uint, uint>::iterator i = shield_power_items.begin();
 			i != shield_power_items.end(); ++i)

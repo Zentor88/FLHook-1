@@ -471,6 +471,18 @@ bool CoreModule::Timer(uint time)
 
 	if (space_obj)
 	{
+		if ((time % (set_tick_time * 5) == 0) && base->invulnerable == 1)
+		{
+			uint vulnAgainTime = (base->accumulated_damage_timer + (BASE_ACCUMULATED_DAMAGE_TIMEOUT * 60));
+			if (vulnAgainTime < time)
+			{
+				base->accumulated_damage_timer = 0;
+				base->total_damage = 0;
+				base->accumulated_damage = 0;
+				base->invulnerable = 0;
+				ConPrint(L"Base %s is no longer invulnerable\n", base->basename);
+			}
+		}
 		if ((base->logic == 1) || (base->invulnerable == 0))
 		{
 
@@ -589,8 +601,16 @@ bool CoreModule::Timer(uint time)
 float CoreModule::SpaceObjDamaged(uint space_obj, uint attacking_space_obj, float curr_hitpoints, float new_hitpoints)
 {
 	base->SpaceObjDamaged(space_obj, attacking_space_obj, curr_hitpoints, new_hitpoints);
+	uint client = HkGetClientIDByShip(attacking_space_obj);
+	
+	// Get the number of HP a base is allowed to sustain during attacks based on predefined % in config file
 	float max_damage_cap = ((MAX_DAMAGE_PERCENT * 0.01f) * base->max_base_health);
+	
+	// Once the base has taken half its allowed HP damage, allow defenders to break the siege
+	// by starting a timer during which the attackers have to reach the damage cap else the base becomes
+	// invulnerable anyway.
 	float siege_break_point = (max_damage_cap / 2.0f);
+	// the alloted time for siege breaking is based on the core level
 	uint break_the_siege_time = (base->base_level * 1320);
 
 	if (set_holiday_mode || (base->basetype == "jumpgate") || (base->basetype == "jumphole") || (base->basetype == "airlock") || (base->basetype == "planet"))
@@ -626,7 +646,7 @@ float CoreModule::SpaceObjDamaged(uint space_obj, uint attacking_space_obj, floa
 				SiegeMessages(base->basename, base->system, L": Assault has been thwarted! Shield at max and now invulnerable to attack");
 
 				// Start Timer
-				base->accumulated_damage_timer = time(nullptr);
+				base->accumulated_damage_timer = time(nullptr);				
 				base->invulnerable = 1;
 			}
 			else if(base->total_damage > max_damage_cap)
@@ -642,14 +662,11 @@ float CoreModule::SpaceObjDamaged(uint space_obj, uint attacking_space_obj, floa
 	}
 	else
 	{
-		if ((base->accumulated_damage_timer + (BASE_ACCUMULATED_DAMAGE_TIMEOUT * 60)) < time(nullptr))
-		{
-			base->accumulated_damage_timer = 0;
-			base->total_damage = 0;
-			base->accumulated_damage = 0;
-			base->invulnerable = 0;
-			ConPrint(L"Base %s is no longer invulnerable\n", base->basename);
-		}
+		uint vulnAgainTime = (base->accumulated_damage_timer + (BASE_ACCUMULATED_DAMAGE_TIMEOUT * 60));
+
+		uint time_left = ((vulnAgainTime - time(nullptr)) / 60);
+		PrintUserCmdText(client, L": Shield is at max power, base is invulnerable for the next %u minutes\n", time_left);
+
 		return curr_hitpoints;
 	}
 

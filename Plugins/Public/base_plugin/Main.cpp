@@ -83,9 +83,6 @@ uint set_tick_time = 16;
 // How much damage do we heal per repair cycle?
 uint repair_per_repair_cycle = 60000;
 
-/// If the shield is up then damage to the base is changed by this multiplier.
-float set_shield_damage_multiplier = 0.03f;
-
 // Maximum amount of damage (in percent of base's max health) base will absorb before becoming invulnerable for a time window
 float MAX_DAMAGE_PERCENT;
 
@@ -1320,7 +1317,7 @@ int __cdecl Dock_Call(unsigned int const &iShip, unsigned int const &base, int i
 			}
 
 			// Shield is up, docking is not possible.
-			if (pbase->shield_active_time && (pbase->invulnerable == 0))
+			if (pbase->shield_state == PlayerBase::SHIELD_STATE_ACTIVE && (pbase->invulnerable == 0))
 			{
 					PrintUserCmdText(client, L"Docking denied during siege attacks");
 					pub::Player::SendNNMessage(client, pub::GetNicknameId("info_access_denied"));
@@ -1477,7 +1474,7 @@ void __stdcall RequestEvent(int iIsFormationRequest, unsigned int iShip, unsigne
 			if (base)
 			{
 				// Shield is up, docking is not possible.
-				if (base->shield_active_time && (base->invulnerable == 0))
+				if (base->shield_state == PlayerBase::SHIELD_STATE_ACTIVE && (base->invulnerable == 0))
 				{
 						PrintUserCmdText(client, L"Docking denied durin siege attacks");
 						pub::Player::SendNNMessage(client, pub::GetNicknameId("info_access_denied"));
