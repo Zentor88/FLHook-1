@@ -1970,7 +1970,6 @@ namespace PlayerCommands
 			PrintUserCmdText(client, L"Adding Stock to Base");
 			for (auto each : starterSupplies)
 			{
-				PrintUserCmdText(client, L"Item: %u : %u", each.first, each.second);
 				newbase->AddMarketGood(each.first, each.second);
 			}
 		}
