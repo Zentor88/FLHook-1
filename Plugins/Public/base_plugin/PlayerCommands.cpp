@@ -1887,32 +1887,58 @@ namespace PlayerCommands
 		int hold_size;
 		list<CARGO_INFO> cargo;
 		HkEnumCargo((const wchar_t*)Players.GetActiveCharacterName(client), cargo, hold_size);
-		for (map<uint, uint>::iterator i = construction_items.begin(); i != construction_items.end(); ++i)
+		bool constructionItemsFound = false;
+		bool consumptionItemsFound = false;
+		bool crewFoodFound = false;
+		bool crewFound = false;
+		bool material_available = false;
+		map<uint, uint>starterSupplies;
+
+		for (list<CARGO_INFO>::iterator ci = cargo.begin(); ci != cargo.end(); ++ci)
 		{
-			bool material_available = false;
-			uint good = i->first;
-			uint quantity = i->second;
-			for (list<CARGO_INFO>::iterator ci = cargo.begin(); ci != cargo.end(); ++ci)
+			for (map<uint, uint>::iterator i = construction_items.begin(); i != construction_items.end(); ++i)
 			{
+				uint good = i->first;
+				uint quantity = i->second;
 				if (ci->iArchID == good && ci->iCount >= (int)quantity)
 				{
-					material_available = true;
+					constructionItemsFound = true;
 					pub::Player::RemoveCargo(client, ci->iID, quantity);
 				}
 			}
-			if (material_available == false)
+			for (auto consumptionItems : set_base_crew_consumption_items)
 			{
-				PrintUserCmdText(client, L"ERR Construction failed due to insufficient raw material.");
-				for (i = construction_items.begin(); i != construction_items.end(); ++i)
+				if (ci->iArchID == consumptionItems.first && ci->iCount >= 200)
 				{
-					const GoodInfo *gi = GoodList::find_by_id(i->first);
-					if (gi)
-					{
-						PrintUserCmdText(client, L"|  %ux %s", i->second, HkGetWStringFromIDS(gi->iIDSName).c_str());
-					}
+					consumptionItemsFound = true;
+					starterSupplies.insert({ ci->iArchID , ci->iCount });
+					pub::Player::RemoveCargo(client, ci->iID, 200);
 				}
-				return;
 			}
+			for (auto crewFood : set_base_crew_food_items)
+			{
+				if (ci->iArchID == crewFood.first && ci->iCount >= 200)
+				{
+					crewFoodFound = true;
+					starterSupplies.insert({ ci->iArchID , ci->iCount });
+					pub::Player::RemoveCargo(client, ci->iID, 200);
+				}
+			}
+			if (ci->iArchID == set_base_crew_type && ci->iCount >= 200)
+			{
+				crewFound = true;
+				starterSupplies.insert({ ci->iArchID , ci->iCount });
+				pub::Player::RemoveCargo(client, ci->iID, 200);
+			}
+			if (crewFound && crewFoodFound && consumptionItemsFound && constructionItemsFound)
+			{
+				material_available = true;
+			}
+		}
+		if (material_available == false)
+		{
+			PrintUserCmdText(client, L"ERR Construction failed due to insufficient materials on board");
+			return;
 		}
 
 		wstring charname = (const wchar_t*)Players.GetActiveCharacterName(client);
@@ -1921,7 +1947,7 @@ namespace PlayerCommands
 			wstos(charname).c_str(),
 			wstos(HkGetAccountID(HkGetAccountByCharname(charname))).c_str());
 
-		PlayerBase *newbase = new PlayerBase(client, password, basename);
+		PlayerBase* newbase = new PlayerBase(client, password, basename);
 		player_bases[newbase->base] = newbase;
 		newbase->basetype = "legacy";
 		newbase->basesolar = "legacy";
@@ -1931,11 +1957,21 @@ namespace PlayerCommands
 		for (map<string, ARCHTYPE_STRUCT>::iterator iter = mapArchs.begin(); iter != mapArchs.end(); iter++)
 		{
 
-			ARCHTYPE_STRUCT &thearch = iter->second;
+			ARCHTYPE_STRUCT& thearch = iter->second;
 			if (iter->first == newbase->basetype)
 			{
 				newbase->invulnerable = thearch.invulnerable;
 				newbase->logic = thearch.logic;
+			}
+		}
+
+		if (material_available)
+		{
+			PrintUserCmdText(client, L"Adding Stock to Base");
+			for (auto each : starterSupplies)
+			{
+				PrintUserCmdText(client, L"Item: %u : %u", each.first, each.second);
+				newbase->AddMarketGood(each.first, each.second);
 			}
 		}
 		newbase->Spawn();
