@@ -29,6 +29,7 @@ struct RECIPE
 	uint cooking_rate;
 	map<uint, uint> consumed_items;
 	uint reqlevel;
+	map<wstring, uint> affiliation_bonus;
 };
 
 struct ARCHTYPE_STRUCT
@@ -89,8 +90,9 @@ public:
 	static const int TYPE_DEFENSE_2 = 9;
 	static const int TYPE_DEFENSE_3 = 10;
 	static const int TYPE_M_CLOAKDISRUPTOR = 11;
-	static const int TYPE_LAST = TYPE_M_CLOAKDISRUPTOR;
-
+	static const int TYPE_RM_ORE_REFINERY = 12;
+	static const int TYPE_LAST = TYPE_RM_ORE_REFINERY;
+		
 	Module(uint the_type) : type(the_type) {}
 	virtual ~Module() {}
 	virtual void Spawn() {}
@@ -243,6 +245,31 @@ public:
 	wstring GetInfo(bool xml);
 	void LoadState(INI_Reader &ini);
 	void SaveState(FILE *file);
+	bool Timer(uint time);
+
+	bool Paused = false;
+	bool ToggleQueuePaused(bool NewState);
+	bool AddToQueue(uint the_equipment_type);
+	bool ClearQueue();
+	void ClearRecipe();
+};
+
+class RefineryModule : public Module
+{
+public:
+	PlayerBase* base;
+
+	// The currently active recipe
+	RECIPE active_recipe;
+
+	// List of queued recipes;
+	list<uint> build_queue;
+
+	RefineryModule(PlayerBase* the_base);
+	RefineryModule(PlayerBase* the_base, uint type);
+	wstring GetInfo(bool xml);
+	void LoadState(INI_Reader& ini);
+	void SaveState(FILE* file);
 	bool Timer(uint time);
 
 	bool Paused = false;
@@ -525,6 +552,7 @@ namespace PlayerCommands
 	void BaseDefMod(uint client, const wstring &args);
 	void BaseBuildMod(uint client, const wstring &args);
 	void BaseFacMod(uint client, const wstring &args);
+	void BaseRefMod(uint client, const wstring& args);
 	void BaseShieldMod(uint client, const wstring &args);
 	void Bank(uint client, const wstring &args);
 	void Shop(uint client, const wstring &args);
@@ -615,7 +643,7 @@ wstring HtmlEncode(wstring text);
 extern string set_status_path_html;
 extern string set_status_path_json;
 
-extern const char* MODULE_TYPE_NICKNAMES[13];
+extern const char* MODULE_TYPE_NICKNAMES[14];
 
 extern float damage_threshold;
 

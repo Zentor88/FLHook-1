@@ -1126,6 +1126,12 @@ bool UserCmd_Process(uint client, const wstring &args)
 		PlayerCommands::BaseFacMod(client, args);
 		return true;
 	}
+	else if (args.find(L"/base refmod") == 0)
+	{
+	returncode = SKIPPLUGINS_NOFUNCTIONCALL;
+	PlayerCommands::BaseRefMod(client, args);
+	return true;
+	}
 	else if (args.find(L"/base defmod") == 0)
 	{
 		returncode = SKIPPLUGINS_NOFUNCTIONCALL;

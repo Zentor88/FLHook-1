@@ -1,15 +1,16 @@
 #include "Main.h"
 
-const char* RECIPE_NAMES[] =
+const char* REF_RECIPE_NAMES[] =
 { "Unknown", "recipe_refine_aluminium", "recipe_refine_beryllium",  "recipe_refine_diamond", "recipe_refine_gold",
 "recipe_refine_helium", "recipe_refine_iridium", "recipe_refine_molybdenum", "recipe_refine_niobium", "recipe_refine_platinum",
-"recipe_refine_hydrocarbon", "recipe_refine_premium_scrap" , 0 };
+"recipe_refine_hydrocarbon", "recipe_refine_scrap" , "recipe_premium_scrap", 0};
 
 const wchar_t* REFINERY_NAMES[] =
 { L"Unknown", L"Unknown", L"Unknown", L"Unknown", L"Unknown",
-	L"Aluminium Refinery", L"Beryllium Refinery", L"Diamond Refinery", L"Gold Refinery", L"Hydrocarbon Refinery",
-	L"Helium Refinery", L"Iridium Refinery", L"Molybdenum Refinery", L"Niobium Refinery", L"Platinum Refinery",
-	L"Premium Scrap Refinery", 0};
+	L"Docking Module Factory", L"Jumpdrive Factory",
+	L"Hyperspace Scanner Factory", L"Cloaking Device Factory", L"Unknown", L"Unknown", L"Cloak Disruptor Factory", 
+	L"Ore Refinery",0 };
+
 
 RefineryModule::RefineryModule(PlayerBase* the_base)
 	: Module(0), base(the_base)
@@ -92,6 +93,22 @@ bool RefineryModule::Timer(uint time)
 
 	if ((time % set_tick_time) != 0)
 		return false;
+	bool hasProductionBonus = false;
+	uint newCookingRate = 0;
+	uint quantity = 0;
+	wstring affiliation = HkGetWStringFromIDS(Reputation::get_name(base->affiliation));
+	ConPrint(L"Base Affiliation: %s\n", affiliation);
+	
+	for (auto theAffiliation : active_recipe.affiliation_bonus)
+	{
+		ConPrint(L"CFG Affiliation: %s\n", theAffiliation.first);
+		if (affiliation == theAffiliation.first)
+		{
+			newCookingRate = (active_recipe.cooking_rate * theAffiliation.second);
+			hasProductionBonus = true;
+			ConPrint(L"Base affiliation bonus found\n");
+		}
+	}
 
 	// Get the next item to make from the build queue.
 	if (!active_recipe.nickname && build_queue.size())
@@ -117,7 +134,15 @@ bool RefineryModule::Timer(uint time)
 		i != active_recipe.consumed_items.end(); ++i)
 	{
 		uint good = i->first;
-		uint quantity = i->second > active_recipe.cooking_rate ? active_recipe.cooking_rate : i->second;
+		if (hasProductionBonus)
+		{
+			quantity = i->second > newCookingRate ? newCookingRate : i->second;
+		}
+		else
+		{
+			quantity = i->second > active_recipe.cooking_rate ? active_recipe.cooking_rate : i->second;
+		}
+
 		if (quantity)
 		{
 			cooked = false;
@@ -140,7 +165,7 @@ bool RefineryModule::Timer(uint time)
 
 	// Add the newly produced item to the market. If there is insufficient space
 	// to add the item, wait until there is space.
-	if (!base->AddMarketGood(active_recipe.produced_item, 1))
+	if (!base->AddMarketGood(active_recipe.produced_item, 500))
 		return false;
 
 	// Reset the nickname to load a new item from the build queue
@@ -186,6 +211,10 @@ void RefineryModule::LoadState(INI_Reader& ini)
 		{
 			build_queue.push_back(ini.get_value_int(0));
 		}
+		else if (ini.is_value("affiliation_bonus"))
+		{
+			active_recipe.affiliation_bonus[stows(ini.get_value_string())] = ini.get_value_int(0);
+		}
 	}
 }
 
@@ -212,54 +241,13 @@ void RefineryModule::SaveState(FILE* file)
 
 bool RefineryModule::AddToQueue(uint equipment_type)
 {
-	if (type == Module::TYPE_RM_ALUMINIUM)
+	if (type == Module::TYPE_RM_ORE_REFINERY)
 	{
-		if (equipment_type == 1)
+		if (equipment_type == 1 || equipment_type == 2 || equipment_type == 3 || equipment_type == 4
+			|| equipment_type == 5 || equipment_type == 6 || equipment_type == 7 || equipment_type == 8
+			|| equipment_type == 9 || equipment_type == 10 || equipment_type == 11 || equipment_type == 12)
 		{
-			build_queue.push_back(CreateID(RECIPE_NAMES[equipment_type]));
-			return true;
-		}
-	}
-	else if (type == Module::TYPE_RM_BERYLLIUM)
-	{
-		if (equipment_type == 2
-			|| equipment_type == 3
-			|| equipment_type == 4)
-		{
-			build_queue.push_back(CreateID(RECIPE_NAMES[equipment_type]));
-			return true;
-		}
-	}
-	else if (type == Module::TYPE_RM_DIAMOND)
-	{
-		if (equipment_type == 5
-			|| equipment_type == 6
-			|| equipment_type == 7
-			|| equipment_type == 15)
-		{
-			build_queue.push_back(CreateID(RECIPE_NAMES[equipment_type]));
-			return true;
-		}
-	}
-	else if (type == Module::TYPE_RM_GOLD)
-	{
-		if (equipment_type == 8
-			|| equipment_type == 9
-			|| equipment_type == 10
-			|| equipment_type == 11)
-		{
-			build_queue.push_back(CreateID(RECIPE_NAMES[equipment_type]));
-			return true;
-		}
-	}
-
-	else if (type == Module::TYPE_M_CLOAKDISRUPTOR)
-	{
-		if (equipment_type == 12
-			|| equipment_type == 13
-			|| equipment_type == 14)
-		{
-			build_queue.push_back(CreateID(RECIPE_NAMES[equipment_type]));
+			build_queue.push_back(CreateID(REF_RECIPE_NAMES[equipment_type]));
 			return true;
 		}
 	}

@@ -3,7 +3,8 @@
 const char* MODULE_TYPE_NICKNAMES[] =
 { "module_build", "module_coreupgrade", "module_shieldgen",
 	"module_storage", "module_defense_1", "module_m_docking", "module_m_jumpdrives",
-	"module_m_hyperspace_scanner", "module_m_cloak", "module_defense_2", "module_defense_3", "module_m_cloakdisruptor", 0 };
+	"module_m_hyperspace_scanner", "module_m_cloak", "module_defense_2", "module_defense_3",
+	"module_m_cloakdisruptor", "module_rm_ore_refinery", 0};
 
 BuildModule::BuildModule(PlayerBase *the_base)
 	: Module(TYPE_BUILD), base(the_base), build_type(0)
@@ -153,6 +154,9 @@ bool BuildModule::Timer(uint time)
 					break;
 				case Module::TYPE_DEFENSE_3:
 					base->modules[i] = new DefenseModule(base, Module::TYPE_DEFENSE_3);
+					break;
+				case Module::TYPE_RM_ORE_REFINERY:
+					base->modules[i] = new RefineryModule(base, Module::TYPE_RM_ORE_REFINERY);
 					break;
 				case Module::TYPE_M_CLOAKDISRUPTOR:
 					base->modules[i] = new FactoryModule(base, Module::TYPE_M_CLOAKDISRUPTOR);

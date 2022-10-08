@@ -91,6 +91,9 @@ namespace PlayerCommands
 			L"<TRA bold=\"true\"/><TEXT>/base defmod</TEXT><TRA bold=\"false\"/><PARA/>"
 			L"<TEXT>Control defense modules.</TEXT><PARA/><PARA/>"
 
+			L"<TRA bold=\"true\"/><TEXT>/base refmod</TEXT><TRA bold=\"false\"/><PARA/>"
+			L"<TEXT>Control Refinery modules.</TEXT><PARA/><PARA/>"
+
 			L"<TRA bold=\"true\"/><TEXT>/base shieldmod</TEXT><TRA bold=\"false\"/><PARA/>"
 			L"<TEXT>Control shield modules.</TEXT><PARA/><PARA/>"
 
@@ -1229,6 +1232,7 @@ namespace PlayerCommands
 			PrintUserCmdText(client, L"|     <type> = 9 - defense platform array type 2");
 			PrintUserCmdText(client, L"|     <type> = 10 - defense platform array type 3");
 			PrintUserCmdText(client, L"|     <type> = 11 - Cloak Disruptor Factory");
+			PrintUserCmdText(client, L"|     <type> = 12 - Ore Refinery");
 		}
 	}
 
@@ -1364,7 +1368,7 @@ namespace PlayerCommands
 				PrintUserCmdText(client, L"ERR Not factory module");
 				return;
 			}
-
+			
 			FactoryModule *mod = (FactoryModule*)base->modules[index];
 			if (mod->ToggleQueuePaused(false))
 				PrintUserCmdText(client, L"OK Build queue resumed");
@@ -1432,6 +1436,177 @@ namespace PlayerCommands
 			PrintUserCmdText(client, L"|     <type> = 14 - Cloak Disruptor Type-3");
 			PrintUserCmdText(client, L"|  pause <index> - pause factory module at <index>");
 			PrintUserCmdText(client, L"|  resume <index> - resume factory module at <index>");
+		}
+	}
+
+	void BaseRefMod(uint client, const wstring& args)
+	{
+		PlayerBase* base = GetPlayerBaseForClient(client);
+		if (!base)
+		{
+			PrintUserCmdText(client, L"ERR Not in player base");
+			return;
+		}
+
+		if (!clients[client].admin)
+		{
+			PrintUserCmdText(client, L"ERR Access denied");
+			return;
+		}
+
+		const wstring& cmd = GetParam(args, ' ', 2);
+		if (cmd == L"list")
+		{
+			PrintUserCmdText(client, L"Refinery Production:");
+			for (uint index = 1; index < base->modules.size(); index++)
+			{
+				if (base->modules[index] &&	(base->modules[index]->type == Module::TYPE_RM_ORE_REFINERY))
+				{
+					RefineryModule* mod = (RefineryModule*)base->modules[index];
+					PrintUserCmdText(client, L"%u: %s", index, mod->GetInfo(false).c_str());
+				}
+			}
+			PrintUserCmdText(client, L"OK");
+		}
+		else if (cmd == L"clear")
+		{
+			uint index = ToInt(GetParam(args, ' ', 3));
+			if (index < 1 || index >= base->modules.size() || !base->modules[index])
+			{
+				PrintUserCmdText(client, L"ERR Module index not valid");
+				return;
+			}
+
+			if (!base->modules[index] ||
+				(base->modules[index]->type != Module::TYPE_RM_ORE_REFINERY))
+			{
+				PrintUserCmdText(client, L"ERR Not a Refinery module");
+				return;
+			}
+
+			RefineryModule* mod = (RefineryModule*)base->modules[index];
+			if (mod->ClearQueue())
+				PrintUserCmdText(client, L"OK Build queue cleared");
+			else
+				PrintUserCmdText(client, L"ERR Build queue clear failed");
+			base->Save();
+		}
+		else if (cmd == L"cancel")
+		{
+			uint index = ToInt(GetParam(args, ' ', 3));
+			if (index < 1 || index >= base->modules.size() || !base->modules[index])
+			{
+				PrintUserCmdText(client, L"ERR Module index not valid");
+				return;
+			}
+
+			if (!base->modules[index] ||
+				(base->modules[index]->type != Module::TYPE_RM_ORE_REFINERY))
+			{
+				PrintUserCmdText(client, L"ERR Not a Refinery module");
+				return;
+			}
+
+			RefineryModule* mod = (RefineryModule*)base->modules[index];
+			mod->ClearRecipe();
+			PrintUserCmdText(client, L"OK Active recipe is canceled");
+			base->Save();
+		}
+		else if (cmd == L"pause")
+		{
+			uint index = ToInt(GetParam(args, ' ', 3));
+			if (index < 1 || index >= base->modules.size() || !base->modules[index])
+			{
+				PrintUserCmdText(client, L"ERR Module index not valid");
+				return;
+			}
+
+			if (!base->modules[index] ||
+				(base->modules[index]->type != Module::TYPE_RM_ORE_REFINERY))
+			{
+				PrintUserCmdText(client, L"ERR Not a Refinery module");
+				return;
+			}
+
+			RefineryModule* mod = (RefineryModule*)base->modules[index];
+			if (mod->ToggleQueuePaused(true))
+				PrintUserCmdText(client, L"ERR Build queue is already paused");
+			else
+				PrintUserCmdText(client, L"OK Build queue paused");
+			base->Save();
+		}
+		else if (cmd == L"resume")
+		{
+			uint index = ToInt(GetParam(args, ' ', 3));
+			if (index < 1 || index >= base->modules.size() || !base->modules[index])
+			{
+				PrintUserCmdText(client, L"ERR Module index not valid");
+				return;
+			}
+
+			if (!base->modules[index] ||
+				(base->modules[index]->type != Module::TYPE_RM_ORE_REFINERY))
+			{
+				PrintUserCmdText(client, L"ERR Not a Refinery module");
+				return;
+			}
+
+			RefineryModule* mod = (RefineryModule*)base->modules[index];
+			if (mod->ToggleQueuePaused(false))
+				PrintUserCmdText(client, L"OK Build queue resumed");
+			else
+				PrintUserCmdText(client, L"ERR Build queue is not paused");
+			base->Save();
+		}
+		else if (cmd == L"add")
+		{
+			uint index = ToInt(GetParam(args, ' ', 3));
+			uint type = ToInt(GetParam(args, ' ', 4));
+			if (index < 1 || index >= base->modules.size() || !base->modules[index])
+			{
+				PrintUserCmdText(client, L"ERR Module index not valid");
+				return;
+			}
+
+			if (!base->modules[index] ||
+				(base->modules[index]->type != Module::TYPE_RM_ORE_REFINERY))
+			{
+				PrintUserCmdText(client, L"ERR Not a Refinery module");
+				return;
+			}
+
+			RefineryModule* mod = (RefineryModule*)base->modules[index];
+			if (mod->AddToQueue(type))
+				PrintUserCmdText(client, L"OK Item added to build queue");
+			else
+				PrintUserCmdText(client, L"ERR Item add to build queue failed");
+			base->Save();
+		}
+		else
+		{
+			PrintUserCmdText(client, L"ERR Invalid parameters");
+			PrintUserCmdText(client, L"/base refmod [list|clear|cancel|add|pause|resume]");
+			PrintUserCmdText(client, L"|  list - show Refinery modules and build status");
+			PrintUserCmdText(client, L"|  clear <index> - clear queue, which starts from the second item in the building queue for the factory module at <index>");
+
+			PrintUserCmdText(client, L"|  cancel <index> - clear only active recipe, which is the first item in the building queue for the factory module at <index>");
+
+			PrintUserCmdText(client, L"|  add <index> <type> - add item <type> to build queue for Refinery module at <index>");
+			PrintUserCmdText(client, L"|     For Ore Refinery:");
+			PrintUserCmdText(client, L"|     <type> = 1 - Refine Aluminium Ore");
+			PrintUserCmdText(client, L"|     <type> = 2 - Refine Beryllium Ore");
+			PrintUserCmdText(client, L"|     <type> = 3 - Refine Uncut Diamonds");
+			PrintUserCmdText(client, L"|     <type> = 4 - Refine Gold Ore");
+			PrintUserCmdText(client, L"|     <type> = 5 - Refine Helium Gas");
+			PrintUserCmdText(client, L"|     <type> = 6 - Refine Iridium Ore");
+			PrintUserCmdText(client, L"|     <type> = 7 - Refine Molbdenum Ore");
+			PrintUserCmdText(client, L"|     <type> = 8 - Refine Niobium Ore");
+			PrintUserCmdText(client, L"|     <type> = 9 - Refine Platinum Ore");
+			PrintUserCmdText(client, L"|     <type> = 10 - Refine Premium Scrap");
+			PrintUserCmdText(client, L"|     <type> = 11 - Refine Raw Hydrocarbons");
+			PrintUserCmdText(client, L"|     <type> = 12 - Refine Scrap");
+			PrintUserCmdText(client, L"|  pause <index> - pause Refinery module at <index>");
+			PrintUserCmdText(client, L"|  resume <index> - resume Refinery module at <index>");
 		}
 	}
 
