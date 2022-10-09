@@ -164,7 +164,7 @@ bool RefineryModule::Timer(uint time)
 
 	// Add the newly produced item to the market. If there is insufficient space
 	// to add the item, wait until there is space.
-	if (!base->AddMarketGood(active_recipe.produced_item, 500))
+	if (!base->AddMarketGood(active_recipe.produced_item, 4000))
 		return false;
 
 	// Reset the nickname to load a new item from the build queue
