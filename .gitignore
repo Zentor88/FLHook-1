@@ -30,3 +30,6 @@ _ReSharper*/
 
 Plugins/Public/*/headers/
 Plugins/Public/*/libs/
+Binaries/bin-vc14/flhook_plugins/public/base.dll
+*.pdb
+Plugins/Public/base_plugin/Base Plugin.vc14.vcxproj

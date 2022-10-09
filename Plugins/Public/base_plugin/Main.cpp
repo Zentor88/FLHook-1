@@ -548,6 +548,10 @@ void LoadSettingsActual()
 					{
 						recipe.reqlevel = ini.get_value_int(0);
 					}
+					else if (ini.is_value("affiliation_bonus"))
+					{
+						recipe.affiliation_bonus[stows(ini.get_value_string(0))] = ini.get_value_int(1);
+					}
 				}
 				recipes[recipe.nickname] = recipe;
 			}
@@ -587,6 +591,10 @@ void LoadSettingsActual()
 					else if (ini.is_value("reqlevel"))
 					{
 						recipe.reqlevel = ini.get_value_int(0);
+					}
+					else if (ini.is_value("affiliation_bonus"))
+					{
+						recipe.affiliation_bonus[stows(ini.get_value_string(0))] = ini.get_value_int(1);
 					}
 				}
 				recipes[recipe.nickname] = recipe;

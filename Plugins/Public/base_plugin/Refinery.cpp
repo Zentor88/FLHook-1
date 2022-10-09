@@ -99,17 +99,6 @@ bool RefineryModule::Timer(uint time)
 	wstring affiliation = HkGetWStringFromIDS(Reputation::get_name(base->affiliation));
 	ConPrint(L"Base Affiliation: %s\n", affiliation);
 	
-	for (auto theAffiliation : active_recipe.affiliation_bonus)
-	{
-		ConPrint(L"CFG Affiliation: %s\n", theAffiliation.first);
-		if (affiliation == theAffiliation.first)
-		{
-			newCookingRate = (active_recipe.cooking_rate * theAffiliation.second);
-			hasProductionBonus = true;
-			ConPrint(L"Base affiliation bonus found\n");
-		}
-	}
-
 	// Get the next item to make from the build queue.
 	if (!active_recipe.nickname && build_queue.size())
 	{
@@ -118,7 +107,7 @@ bool RefineryModule::Timer(uint time)
 		{
 			active_recipe = i->second;
 		}
-		build_queue.pop_front();
+		build_queue.pop_front();	
 	}
 
 	// Nothing to do.
@@ -134,6 +123,19 @@ bool RefineryModule::Timer(uint time)
 		i != active_recipe.consumed_items.end(); ++i)
 	{
 		uint good = i->first;
+
+		for (map<wstring, uint>::iterator i = active_recipe.affiliation_bonus.begin();
+			i != active_recipe.affiliation_bonus.end(); ++i)
+		{
+			ConPrint(L"Affiliation Bonus: %s\n", i->first);
+			if (affiliation == i->first)
+			{
+				ConPrint(L"Match Found\n");
+				newCookingRate = active_recipe.cooking_rate * i->second;
+				hasProductionBonus = true;
+			}
+		}
+
 		if (hasProductionBonus)
 		{
 			quantity = i->second > newCookingRate ? newCookingRate : i->second;
@@ -213,7 +215,7 @@ void RefineryModule::LoadState(INI_Reader& ini)
 		}
 		else if (ini.is_value("affiliation_bonus"))
 		{
-			active_recipe.affiliation_bonus[stows(ini.get_value_string())] = ini.get_value_int(0);
+			active_recipe.affiliation_bonus[stows(ini.get_value_string(0))] = ini.get_value_int(1);
 		}
 	}
 }
