@@ -3,7 +3,7 @@
 const char* REF_RECIPE_NAMES[] =
 { "Unknown", "recipe_refine_aluminium", "recipe_refine_beryllium",  "recipe_refine_diamond", "recipe_refine_gold",
 "recipe_refine_helium", "recipe_refine_iridium", "recipe_refine_molybdenum", "recipe_refine_niobium", "recipe_refine_platinum",
-"recipe_refine_hydrocarbon", "recipe_refine_scrap" , "recipe_premium_scrap", 0};
+"recipe_refine_hydrocarbon", "recipe_refine_scrap" , "recipe_refine_premium_scrap", 0};
 
 const wchar_t* REFINERY_NAMES[] =
 { L"Unknown", L"Unknown", L"Unknown", L"Unknown", L"Unknown",
@@ -123,12 +123,12 @@ bool RefineryModule::Timer(uint time)
 	{
 		uint good = i->first;
 
-		for (map<wstring, uint>::iterator i = active_recipe.affiliation_bonus.begin();
-			i != active_recipe.affiliation_bonus.end(); ++i)
+		for (map<wstring, uint>::iterator j = active_recipe.affiliation_bonus.begin();
+			j != active_recipe.affiliation_bonus.end(); ++j)
 		{
-			if (affiliation == i->first)
+			if (affiliation == j->first)
 			{
-				newCookingRate = active_recipe.cooking_rate * i->second;
+				newCookingRate = active_recipe.cooking_rate * j->second;
 				hasProductionBonus = true;
 			}
 		}
@@ -164,7 +164,7 @@ bool RefineryModule::Timer(uint time)
 
 	// Add the newly produced item to the market. If there is insufficient space
 	// to add the item, wait until there is space.
-	if (!base->AddMarketGood(active_recipe.produced_item, 4000))
+	if (!base->AddMarketGood(active_recipe.produced_item, active_recipe.produced_quantity))
 		return false;
 
 	// Reset the nickname to load a new item from the build queue
@@ -193,6 +193,10 @@ void RefineryModule::LoadState(INI_Reader& ini)
 		else if (ini.is_value("produced_item"))
 		{
 			active_recipe.produced_item = ini.get_value_int(0);
+		}
+		else if (ini.is_value("produced_quantity"))
+		{
+			active_recipe.produced_quantity = ini.get_value_int(0);
 		}
 		else if (ini.is_value("cooking_rate"))
 		{
@@ -224,6 +228,7 @@ void RefineryModule::SaveState(FILE* file)
 	fprintf(file, "nickname = %u\n", active_recipe.nickname);
 	fprintf(file, "paused = %d\n", Paused);
 	fprintf(file, "produced_item = %u\n", active_recipe.produced_item);
+	fprintf(file, "produced_quantity = %u\n", active_recipe.produced_quantity);
 	fprintf(file, "cooking_rate = %u\n", active_recipe.cooking_rate);
 	fprintf(file, "infotext = %s\n", wstos(active_recipe.infotext).c_str());
 	for (map<uint, uint>::iterator i = active_recipe.consumed_items.begin();

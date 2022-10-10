@@ -25,6 +25,7 @@ struct RECIPE
 	RECIPE() : produced_item(0), cooking_rate(0) {}
 	uint nickname;
 	uint produced_item;
+	uint produced_quantity;
 	wstring infotext;
 	uint cooking_rate;
 	map<uint, uint> consumed_items;

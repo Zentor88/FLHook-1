@@ -532,6 +532,10 @@ void LoadSettingsActual()
 					{
 						recipe.produced_item = CreateID(ini.get_value_string(0));
 					}
+					else if (ini.is_value("produced_quantity"))
+					{
+						recipe.produced_quantity = ini.get_value_int(0);
+					}
 					else if (ini.is_value("infotext"))
 					{
 						recipe.infotext = stows(ini.get_value_string());
