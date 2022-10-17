@@ -1441,6 +1441,7 @@ namespace PlayerCommands
 
 	void BaseRefMod(uint client, const wstring& args)
 	{
+		bool continuous = false;
 		PlayerBase* base = GetPlayerBaseForClient(client);
 		if (!base)
 		{
@@ -1562,6 +1563,13 @@ namespace PlayerCommands
 		{
 			uint index = ToInt(GetParam(args, ' ', 3));
 			uint type = ToInt(GetParam(args, ' ', 4));
+			string iscontinuous = wstos(GetParam(args, ' ', 5));
+			if (iscontinuous == "true")
+				continuous = true;
+			else if (iscontinuous == "false")
+				continuous = false;
+			else
+				PrintUserCmdText(client, L"Invalid Response");
 			if (index < 1 || index >= base->modules.size() || !base->modules[index])
 			{
 				PrintUserCmdText(client, L"ERR Module index not valid");
@@ -1576,7 +1584,7 @@ namespace PlayerCommands
 			}
 
 			RefineryModule* mod = (RefineryModule*)base->modules[index];
-			if (mod->AddToQueue(type))
+			if (mod->AddToQueue(type, continuous))
 				PrintUserCmdText(client, L"OK Item added to build queue");
 			else
 				PrintUserCmdText(client, L"ERR Item add to build queue failed");
@@ -1591,7 +1599,7 @@ namespace PlayerCommands
 
 			PrintUserCmdText(client, L"|  cancel <index> - clear only active recipe, which is the first item in the building queue for the factory module at <index>");
 
-			PrintUserCmdText(client, L"|  add <index> <type> - add item <type> to build queue for Refinery module at <index>");
+			PrintUserCmdText(client, L"|  add <index> <type> <continuous (true/false) - begin processing <type> ore on Refinery at <index>. <continuous> [true] tells it to run nonstop");
 			PrintUserCmdText(client, L"|     For Ore Refinery:");
 			PrintUserCmdText(client, L"|     <type> = 1 - Refine Aluminium Ore");
 			PrintUserCmdText(client, L"|     <type> = 2 - Refine Beryllium Ore");
@@ -1599,7 +1607,7 @@ namespace PlayerCommands
 			PrintUserCmdText(client, L"|     <type> = 4 - Refine Gold Ore");
 			PrintUserCmdText(client, L"|     <type> = 5 - Refine Helium Gas");
 			PrintUserCmdText(client, L"|     <type> = 6 - Refine Iridium Ore");
-			PrintUserCmdText(client, L"|     <type> = 7 - Refine Molbdenum Ore");
+			PrintUserCmdText(client, L"|     <type> = 7 - Refine Molybdenum Ore");
 			PrintUserCmdText(client, L"|     <type> = 8 - Refine Niobium Ore");
 			PrintUserCmdText(client, L"|     <type> = 9 - Refine Platinum Ore");
 			PrintUserCmdText(client, L"|     <type> = 10 - Refine Premium Scrap");

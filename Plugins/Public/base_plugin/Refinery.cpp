@@ -90,10 +90,10 @@ wstring RefineryModule::GetInfo(bool xml)
 // and convert this module into the specified type.	
 bool RefineryModule::Timer(uint time)
 {
-
 	if ((time % set_tick_time) != 0)
 		return false;
 	bool hasProductionBonus = false;
+	bool continuous = false;
 	uint newCookingRate = 0;
 	uint quantity = 0;
 	wstring affiliation = HkGetWStringFromIDS(Reputation::get_name(base->affiliation));
@@ -101,12 +101,17 @@ bool RefineryModule::Timer(uint time)
 	// Get the next item to make from the build queue.
 	if (!active_recipe.nickname && build_queue.size())
 	{
-		map<uint, RECIPE>::iterator i = recipes.find(build_queue.front());
-		if (i != recipes.end())
+		for (auto d : build_queue)
 		{
-			active_recipe = i->second;
+			map<uint, RECIPE>::iterator i = recipes.find(d.first);
+			if (i != recipes.end())
+			{
+				active_recipe = i->second;
+				continuous = d.second;
+				if (!continuous)
+					build_queue.clear();
+			}			
 		}
-		build_queue.pop_front();	
 	}
 
 	// Nothing to do.
@@ -134,13 +139,9 @@ bool RefineryModule::Timer(uint time)
 		}
 
 		if (hasProductionBonus)
-		{
 			quantity = i->second > newCookingRate ? newCookingRate : i->second;
-		}
 		else
-		{
 			quantity = i->second > active_recipe.cooking_rate ? active_recipe.cooking_rate : i->second;
-		}
 
 		if (quantity)
 		{
@@ -154,6 +155,8 @@ bool RefineryModule::Timer(uint time)
 					base->RemoveMarketGood(good, quantity);
 					return false;
 				}
+				else
+					continuous = false;
 			}
 		}
 	}
@@ -212,7 +215,7 @@ void RefineryModule::LoadState(INI_Reader& ini)
 		}
 		else if (ini.is_value("build_queue"))
 		{
-			build_queue.push_back(ini.get_value_int(0));
+			build_queue[ini.get_value_int(0)] = ini.get_value_bool(1);
 		}
 		else if (ini.is_value("affiliation_bonus"))
 		{
@@ -236,14 +239,13 @@ void RefineryModule::SaveState(FILE* file)
 	{
 		fprintf(file, "consumed = %u, %u\n", i->first, i->second);
 	}
-	for (list<uint>::iterator i = build_queue.begin();
-		i != build_queue.end(); ++i)
+	for (auto i : build_queue)
 	{
-		fprintf(file, "build_queue = %u\n", *i);
+		fprintf(file, "build_queue = %u, %u\n", i.first, i.second);
 	}
 }
 
-bool RefineryModule::AddToQueue(uint equipment_type)
+bool RefineryModule::AddToQueue(uint equipment_type, bool continuous)
 {
 	if (type == Module::TYPE_RM_ORE_REFINERY)
 	{
@@ -251,7 +253,8 @@ bool RefineryModule::AddToQueue(uint equipment_type)
 			|| equipment_type == 5 || equipment_type == 6 || equipment_type == 7 || equipment_type == 8
 			|| equipment_type == 9 || equipment_type == 10 || equipment_type == 11 || equipment_type == 12)
 		{
-			build_queue.push_back(CreateID(REF_RECIPE_NAMES[equipment_type]));
+			build_queue[(CreateID(REF_RECIPE_NAMES[equipment_type]))] = continuous;
+			ConPrint(L"Build Queue Updated: %u, %u", build_queue);
 			return true;
 		}
 	}

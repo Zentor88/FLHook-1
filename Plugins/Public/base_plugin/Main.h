@@ -259,12 +259,12 @@ class RefineryModule : public Module
 {
 public:
 	PlayerBase* base;
-
+	
 	// The currently active recipe
 	RECIPE active_recipe;
 
 	// List of queued recipes;
-	list<uint> build_queue;
+	map<uint, bool> build_queue;
 
 	RefineryModule(PlayerBase* the_base);
 	RefineryModule(PlayerBase* the_base, uint type);
@@ -275,7 +275,7 @@ public:
 
 	bool Paused = false;
 	bool ToggleQueuePaused(bool NewState);
-	bool AddToQueue(uint the_equipment_type);
+	bool AddToQueue(uint equipment_type, bool continuous);
 	bool ClearQueue();
 	void ClearRecipe();
 };
@@ -381,7 +381,7 @@ public:
 	uint base;
 
 	map<wstring, uint> last_login_attempt_time;
-	map<wstring, int> unsuccessful_logins_in_a_row;
+	map<wstring, uint> unsuccessful_logins_in_a_row;
 
 	// The list of administration passwords
 	list<BasePassword> passwords;
